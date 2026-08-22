@@ -2,6 +2,7 @@
 A game about controlling and stabilizing the Power Grid
 
 All in icluded pictures are from flaticon.com:
+
 <a href="https://www.flaticon.com/free-icons/no-power" title="no power icons">No power icons created by kawalanicon - Flaticon</a>,
 
 <a href="https://www.flaticon.com/free-icons/solar" title="solar icons">Solar icons created by Magnific - Flaticon</a>,
