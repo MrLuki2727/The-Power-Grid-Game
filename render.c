@@ -5,9 +5,15 @@
 #include <stdio.h>
 #include "plant.h"
 
-bool is_shop_open = false;
 int shop_target_plant = 0;
-bool shop_just_opened = false;
+bool is_popup_open = false;
+bool popup_just_opened = false;
+
+bool is_shop_open = 0;
+bool is_menu_open = 0;
+bool is_settings_open = 0;
+
+
 
 Texture2D plant_icons[8];
 
@@ -72,8 +78,8 @@ void render_top_zone(GameState *game_state)
                     Rectangle buy_plant_button = { slot.x, slot.y + row_height - 30, col_width, 30 };
                     if (GuiButton(buy_plant_button, "Buy Plant"))
                     {
+                        popup_just_opened = true;
                         is_shop_open = true;
-                        shop_just_opened = true;
                         shop_target_plant = i;
                     }
                     break;
@@ -130,22 +136,22 @@ void render_top_zone(GameState *game_state)
                 {
                     DrawText(TextFormat("Pump"), slot.x + 5, slot.y + 5, 10, BLACK);
                     DrawText(TextFormat("%d kW / %d kW | %d kWh / %d kWh", game_state->Power_plants[i].power_generation, game_state->Power_plants[i].power_max,game_state->Power_plants[i].capacity,game_state->Power_plants[i].max_capacity),slot.x + 5, slot.y + 25, plant_info_text_size, BLACK);
-                    Rectangle start_plant_button = { slot.x+2, slot.y + row_height - 30, (col_width-4) / 4, 30 };
+                    Rectangle start_plant_button = { slot.x, slot.y + row_height - 30, (col_width) / 4, 30 };
                     if (GuiButton(start_plant_button, "Pump"))
                     {
                         game_state->Power_plants[i].status = 1;
                     }
-                    Rectangle stop_plant_button = { slot.x + (col_width+2)/4, slot.y + row_height - 30, (col_width-4) / 4, 30 };
+                    Rectangle stop_plant_button = { slot.x + (col_width)/4, slot.y + row_height - 30, (col_width) / 4, 30 };
                     if (GuiButton(stop_plant_button, "Stop"))
                     {
                         game_state->Power_plants[i].status = 0;
                     }
-                    Rectangle regenerate_plant_button = { slot.x + (col_width+2)/2, slot.y + row_height - 30, (col_width-4) / 4, 30 };
+                    Rectangle regenerate_plant_button = { slot.x + (col_width)/2, slot.y + row_height - 30, (col_width) / 4, 30 };
                     if (GuiButton(regenerate_plant_button, "Start"))
                     {
                         game_state->Power_plants[i].status = 2;
                     }
-                    Rectangle auto_plant_button = { slot.x + ((col_width+2)/4)*3, slot.y + row_height - 30, (col_width-4) / 4, 30 };
+                    Rectangle auto_plant_button = { slot.x + ((col_width)/4)*3, slot.y + row_height - 30, (col_width) / 4, 30 };
                     if (GuiButton(auto_plant_button, "Auto"))
                     {
                         game_state->Power_plants[i].status = 3;
@@ -156,22 +162,22 @@ void render_top_zone(GameState *game_state)
                 {
                     DrawText(TextFormat("Battery"), slot.x + 5, slot.y + 5, 10, BLACK);
                     DrawText(TextFormat("%d kW / %d kW | %d kWh / %d kWh", game_state->Power_plants[i].power_generation, game_state->Power_plants[i].power_max,game_state->Power_plants[i].capacity,game_state->Power_plants[i].max_capacity),slot.x + 5, slot.y + 25, plant_info_text_size, BLACK);
-                    Rectangle start_plant_button = { slot.x+2, slot.y + row_height - 30, (col_width-4) / 4, 30 };
-                    if (GuiButton(start_plant_button, "Pump"))
+                    Rectangle start_plant_button = { slot.x, slot.y + row_height - 30, (col_width) / 4, 30 };
+                    if (GuiButton(start_plant_button, "Charge"))
                     {
                         game_state->Power_plants[i].status = 1;
                     }
-                    Rectangle stop_plant_button = { slot.x + (col_width+2)/4, slot.y + row_height - 30, (col_width-4) / 4, 30 };
+                    Rectangle stop_plant_button = { slot.x + (col_width)/4, slot.y + row_height - 30, (col_width) / 4, 30 };
                     if (GuiButton(stop_plant_button, "Stop"))
                     {
                         game_state->Power_plants[i].status = 0;
                     }
-                    Rectangle regenerate_plant_button = { slot.x + (col_width+2)/2, slot.y + row_height - 30, (col_width-4) / 4, 30 };
+                    Rectangle regenerate_plant_button = { slot.x + (col_width)/2, slot.y + row_height - 30, (col_width) / 4, 30 };
                     if (GuiButton(regenerate_plant_button, "Start"))
                     {
                         game_state->Power_plants[i].status = 2;
                     }
-                    Rectangle auto_plant_button = { slot.x + ((col_width+2)/4)*3, slot.y + row_height - 30, (col_width-4) / 4, 30 };
+                    Rectangle auto_plant_button = { slot.x + ((col_width)/4)*3, slot.y + row_height - 30, (col_width) / 4, 30 };
                     if (GuiButton(auto_plant_button, "Auto"))
                     {
                         game_state->Power_plants[i].status = 3;
@@ -288,7 +294,7 @@ void render_dashboard(GameState *game_state)
     DrawText(TextFormat("Erzeugung: %d kW", game_state->GridState.power_generation), 20, dashboard_y + 20 + line_spacing * 2, font_size, WHITE);
     DrawText(TextFormat("Verbrauch: %d kW", game_state->GridState.power_demand), 20, dashboard_y + 20 + line_spacing * 3, font_size, WHITE);
     DrawText(TextFormat("Zufriedenheit: %d %", game_state->GridState.satisfaction), 20, dashboard_y + 20 + line_spacing * 4, font_size, WHITE);
-    DrawText(TextFormat("NetzStabilität: %d", game_state->GridState.stability), 20, dashboard_y + 20 + line_spacing * 5, font_size, WHITE);
+
 }
 
 void render_stability_gauge(GameState *game_state)
@@ -316,16 +322,16 @@ void render_stability_gauge(GameState *game_state)
     DrawLineEx((Vector2){center_x, center_y}, needle_end, needle_thickness, BLACK);
 }
 void render_shop(GameState *game_state)
-{       is_shop_open = true;
+{       is_popup_open = true;
 
         int screen_w = GetScreenWidth();
         int screen_h = GetScreenHeight();
 
-        // Halbtransparentes Overlay über allem
+
         DrawRectangle(0, 0, screen_w, screen_h, (Color){0, 0, 0, 180});
 
         int panel_w = screen_w * 0.5f;
-        int panel_h = screen_h * 0.6f;
+        int panel_h = 400;
         int panel_x = (screen_w - panel_w) / 2;
         int panel_y = (screen_h - panel_h) / 2;
 
@@ -342,10 +348,11 @@ void render_shop(GameState *game_state)
             char label[64];
             sprintf(label, "%s (%d)", names[i-1], plant_defaults[i].cost_per_unit);
 
-            if (GuiButton(button, label) && !shop_just_opened)
+            if (GuiButton(button, label) && !popup_just_opened)
             {
                 if (simulation_build_plant(game_state, shop_target_plant, i))
                 {
+                    is_popup_open = false;
                     is_shop_open = false;
                 }
             }
@@ -355,9 +362,10 @@ void render_shop(GameState *game_state)
         Rectangle close_button = { panel_x + panel_w - 100, panel_y+10, 80, 30 };
         if (GuiButton(close_button, "Close"))
         {
+            is_popup_open = false;
             is_shop_open = false;
         }
-        shop_just_opened = false;
+        popup_just_opened = false;
 
 }
 void render_power_graph(GameState* game_state)
@@ -415,8 +423,104 @@ void render_power_graph(GameState* game_state)
 
 
 }
-void render_day_info(GameState* game_state)
+void render_day_night_indicator(GameState *game_state)
 {
     int screen_w = GetScreenWidth();
     int screen_h = GetScreenHeight();
+
+
+    int center_x = screen_w * 0.27f;
+    int center_y = screen_h * 0.985f;
+    int radius = screen_h * 0.13f;
+
+    float t = game_state->GridState.time_of_day; // 0.0 - 1.0
+
+    // draw sphere
+    DrawCircleSector((Vector2){center_x, center_y}, radius, 180, 360, 32, (Color){30, 30, 60, 255});
+    DrawRing((Vector2){center_x, center_y}, radius - 2, radius, 180, 360, 32, DARKGRAY);
+
+
+    Color sky_color;
+    bool is_night = (t < 0.25f || t > 0.75f);
+
+    if (t < 0.25f || t > 0.75f) sky_color = (Color){20, 20, 60, 200};
+    else sky_color = (Color){135, 206, 235, 200};
+
+    DrawCircleSector((Vector2){center_x, center_y}, radius, 180, 360, 32, sky_color);
+
+    // calculate position of sun
+
+    float angle = 180.0f + t * 180.0f;
+
+    Vector2 sun_pos = {
+        center_x + cosf(angle * DEG2RAD) * radius,
+        center_y + sinf(angle * DEG2RAD) * radius
+    };
+
+    Color celestial_color = is_night ? LIGHTGRAY : YELLOW;
+    DrawCircle(sun_pos.x, sun_pos.y, screen_w * 0.009f, celestial_color);
+
+    //draw time
+    float hours_float = t * 24.0f;
+    int hours = (int)hours_float;
+    int minutes = ((int)((hours_float - hours) * 60.0f) / 10) * 10;
+
+    const char *time_text = TextFormat("%02d:%02d", hours, minutes);
+    int text_width = MeasureText(time_text, screen_w * 0.03f);
+
+    DrawText(time_text, center_x - text_width / 2, center_y * 0.95f, screen_w * 0.03f, WHITE);
+}
+
+void render_menu(GameState *game_state)
+{
+    is_popup_open = true;
+
+    int screen_w = GetScreenWidth();
+    int screen_h = GetScreenHeight();
+
+
+    DrawRectangle(0, 0, screen_w, screen_h, (Color){0, 0, 0, 180});
+
+    int panel_w = 400;
+    int panel_h = 350;
+    int panel_x = (screen_w - panel_w) / 2;
+    int panel_y = (screen_h - panel_h) / 2;
+
+    DrawRectangle(panel_x, panel_y, panel_w, panel_h, DARKGRAY);
+    DrawText("Menu", panel_x + 20, panel_y + 20, 24, WHITE);
+
+
+        int button_h = 40;
+
+
+        Rectangle back_to_game_button = { panel_x + 20, panel_y + 60+1 * (button_h + 10), panel_w - 40, button_h };
+        if (GuiButton(back_to_game_button, "Back to Game"))
+        {
+            is_popup_open = false;
+            is_menu_open = false;
+
+        }
+        Rectangle save_game_button = { panel_x + 20, panel_y + 60+2 * (button_h + 10), panel_w - 40, button_h };
+        if (GuiButton(save_game_button, "Save Game"))
+        {
+            //TODO Implement save game
+            //save_game(game_state);
+        }
+        Rectangle load_game_button = { panel_x + 20, panel_y + 60+3 * (button_h + 10), panel_w - 40, button_h };
+        if (GuiButton(load_game_button, "Load Game"))
+        {
+            //TODO Implement load game
+            //load_game(game_state);
+        }
+        Rectangle settings_button = { panel_x + 20, panel_y + 60+4 * (button_h + 10), panel_w - 40, button_h };
+        if (GuiButton(settings_button, "Settings"))
+        {
+            popup_just_opened = true;
+            is_settings_open = true;
+        }
+
+
+
+    popup_just_opened = false;
+
 }
