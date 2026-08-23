@@ -7,10 +7,16 @@
 
 #define DEVIATION_INTERVAL 3.0f     // seconds between random weather noise ticks
 #define USER_GROWTH_INTERVAL 10.0f  // seconds between user count changes
+#define INCOME_INTERVAL 5.0f
 
 bool is_storage(int type)
 {
     return type == 4 || type == 5; // 4 = Pump, 5 = Battery
+}
+
+bool is_regulatable(int type)
+{
+    return type == 6 || type == 7;
 }
 
 static float rand_deviation(void)
@@ -20,9 +26,9 @@ static float rand_deviation(void)
 
 bool simulation_build_plant(GameState *game_state, int slot, int type)
 {
-    if (slot < 0 || slot >= 8) return false;
+    if (slot < 0 || slot > 7) return false;
     if (game_state->Power_plants[slot].type != 0) return false;
-    if (type < 1 || type > 8) return false;
+    if (type < 1 || type > 7) return false;
 
     int build_cost = plant_defaults[type].cost_per_unit;
     if (game_state->GridState.money < build_cost) return false;
@@ -41,7 +47,10 @@ static void update_plant(PowerPlant_t *plant, float time_of_day, bool do_deviati
     int target;
     float solar_factor = 0.0f;
 
-    if (plant->type == 0 || plant->status == 0)
+    if (is_regulatable(plant->type)) {
+        target = plant->aimed_power_generation;
+    }
+    else if (plant->type == 0 || plant->status == 0)
     {
         target = 0;
     }
@@ -58,10 +67,9 @@ static void update_plant(PowerPlant_t *plant, float time_of_day, bool do_deviati
     {
         target = plant->power_max;
     }
-    else // Coal/Nuclear: player-set target
-    {
-        target = plant->aimed_power_generation;
-    }
+
+
+
 
     int max_step = plant->power_max / plant->reaction_time;
     if (max_step < 1) max_step = 1;
@@ -248,6 +256,28 @@ void simulation_update(GameState *game_state, float delta_time)
 
     game_state->GridState.satisfaction = calculate_satisfaction(game_state);
 
+    // calculate income
+    game_state->GridState.income_timer += delta_time;
+
+    if (game_state->GridState.income_timer >= INCOME_INTERVAL)
+    {
+        game_state->GridState.income_timer = 0.0f;
+
+        // Stability bonus: 1.0 at perfect stability, 0.0 at the edges (+-100)
+        int stability_abs = abs(game_state->GridState.stability);
+        float stability_bonus = 1.0f - (float)stability_abs / 100.0f;
+        if (stability_bonus < 0) stability_bonus = 0;
+
+        // Revenue based on how much power was actually delivered to users, not just user count
+        float price_per_kw = 0.2f; // tune this to balance income vs plant costs (100-800)
+
+        int income = (int)(game_state->GridState.power_demand * price_per_kw * stability_bonus);
+
+        game_state->GridState.money += income;
+
+        if (game_state->GridState.money < 0) game_state->GridState.money = 0;
+    }
+
     // 8. User count changes slowly (every USER_GROWTH_INTERVAL seconds), NOT every tick
     game_state->GridState.user_growth_timer += delta_time;
 
@@ -286,7 +316,7 @@ void simulation_update(GameState *game_state, float delta_time)
 
 void simulation_init(GameState *game_state)
 {
-    game_state->GridState.money = 1000;
+    game_state->GridState.money = 10000;
     game_state->GridState.power_user_count = 10;
     game_state->GridState.stability = 0;
     game_state->GridState.satisfaction = 50;

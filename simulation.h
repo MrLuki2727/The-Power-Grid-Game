@@ -32,6 +32,7 @@ typedef struct
     float day_length_seconds;
     float user_growth_timer;
     float deviation_timer;
+    float income_timer;
 
 }GridState_t;
 
@@ -61,5 +62,6 @@ bool simulation_build_plant(GameState *game_state, int slot, int type); // Slot 
 void simulation_init(GameState *game_state);
 
 bool is_storage(int type);
+bool is_regulatable(int type);
 
 #endif //POWER_GAME_SIMULATION_H

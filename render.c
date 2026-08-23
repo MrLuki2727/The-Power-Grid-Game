@@ -58,7 +58,10 @@ void render_top_zone(GameState *game_state)
         };
 
         Color slot_color = LIGHTGRAY;
-        if (game_state->Power_plants[i].status == 1) slot_color = GREEN;
+
+        if ( is_regulatable(game_state->Power_plants[i].type) && game_state->Power_plants[i].aimed_power_generation > 0) slot_color = GREEN;
+        else if (is_regulatable(game_state->Power_plants[i].type) && game_state->Power_plants[i].aimed_power_generation == 0) slot_color = RED;
+        else if (game_state->Power_plants[i].status == 1) slot_color = GREEN;
         else if (game_state->Power_plants[i].status == 0 && game_state->Power_plants[i].type == 0) slot_color = GRAY;
         else if (game_state->Power_plants[i].status == 0) slot_color = RED;
         else if (game_state->Power_plants[i].status == 2) slot_color = YELLOW;
@@ -76,7 +79,7 @@ void render_top_zone(GameState *game_state)
                     DrawText(TextFormat("%d kW / %dkW", game_state->Power_plants[i].power_generation, min(game_state->Power_plants[i].power_max,game_state->Power_plants[i].aimed_power_generation)),slot.x + 5, slot.y + 25, plant_info_text_size, BLACK);
 
                     Rectangle buy_plant_button = { slot.x, slot.y + row_height - 30, col_width, 30 };
-                    if (GuiButton(buy_plant_button, "Buy Plant"))
+                    if (GuiButton(buy_plant_button, "Buy Plant") && !is_popup_open)
                     {
                         popup_just_opened = true;
                         is_shop_open = true;
@@ -89,12 +92,12 @@ void render_top_zone(GameState *game_state)
                     DrawText(TextFormat("Solar"), slot.x + 5, slot.y + 5, 10, BLACK);
                     DrawText(TextFormat("%d kW / %dkW", game_state->Power_plants[i].power_generation, game_state->Power_plants[i].power_max),slot.x + 5, slot.y + 25, plant_info_text_size, BLACK);
                     Rectangle start_plant_button = { slot.x+2, slot.y + row_height - 30, (col_width-4) / 2, 30 };
-                    if (GuiButton(start_plant_button, "Start"))
+                    if (GuiButton(start_plant_button, "Start") && !is_popup_open)
                     {
                         game_state->Power_plants[i].status = 1;
                     }
                     Rectangle stop_plant_button = { slot.x + (col_width+2)/2, slot.y + row_height - 30, (col_width-4) / 2, 30 };
-                    if (GuiButton(stop_plant_button, "Stop"))
+                    if (GuiButton(stop_plant_button, "Stop") && !is_popup_open)
                     {
                         game_state->Power_plants[i].status = 0;
                     }
@@ -105,12 +108,12 @@ void render_top_zone(GameState *game_state)
                     DrawText(TextFormat("Wind Turbine"), slot.x + 5, slot.y + 5, 10, BLACK);
                     DrawText(TextFormat("%d kW / %dkW", game_state->Power_plants[i].power_generation, game_state->Power_plants[i].power_max),slot.x + 5, slot.y + 25, plant_info_text_size, BLACK);
                     Rectangle start_plant_button = { slot.x+2, slot.y + row_height - 30, (col_width-4) / 2, 30 };
-                    if (GuiButton(start_plant_button, "Start"))
+                    if (GuiButton(start_plant_button, "Start") && !is_popup_open)
                     {
                         game_state->Power_plants[i].status = 1;
                     }
                     Rectangle stop_plant_button = { slot.x + (col_width+2)/2, slot.y + row_height - 30, (col_width-4) / 2, 30 };
-                    if (GuiButton(stop_plant_button, "Stop"))
+                    if (GuiButton(stop_plant_button, "Stop") && !is_popup_open)
                     {
                         game_state->Power_plants[i].status = 0;
                     }
@@ -121,12 +124,12 @@ void render_top_zone(GameState *game_state)
                     DrawText(TextFormat("Water"), slot.x + 5, slot.y + 5, 10, BLACK);
                     DrawText(TextFormat("%d kW / %dkW", game_state->Power_plants[i].power_generation, game_state->Power_plants[i].power_max),slot.x + 5, slot.y + 25, plant_info_text_size, BLACK);
                     Rectangle start_plant_button = { slot.x+2, slot.y + row_height - 30, (col_width-4) / 2, 30 };
-                    if (GuiButton(start_plant_button, "Start"))
+                    if (GuiButton(start_plant_button, "Start") && !is_popup_open)
                     {
                         game_state->Power_plants[i].status = 1;
                     }
                     Rectangle stop_plant_button = { slot.x + (col_width+2)/2, slot.y + row_height - 30, (col_width-4) / 2, 30 };
-                    if (GuiButton(stop_plant_button, "Stop"))
+                    if (GuiButton(stop_plant_button, "Stop") && !is_popup_open)
                     {
                         game_state->Power_plants[i].status = 0;
                     }
@@ -137,22 +140,22 @@ void render_top_zone(GameState *game_state)
                     DrawText(TextFormat("Pump"), slot.x + 5, slot.y + 5, 10, BLACK);
                     DrawText(TextFormat("%d kW / %d kW | %d kWh / %d kWh", game_state->Power_plants[i].power_generation, game_state->Power_plants[i].power_max,game_state->Power_plants[i].capacity,game_state->Power_plants[i].max_capacity),slot.x + 5, slot.y + 25, plant_info_text_size, BLACK);
                     Rectangle start_plant_button = { slot.x, slot.y + row_height - 30, (col_width) / 4, 30 };
-                    if (GuiButton(start_plant_button, "Pump"))
+                    if (GuiButton(start_plant_button, "Pump") && !is_popup_open)
                     {
                         game_state->Power_plants[i].status = 1;
                     }
                     Rectangle stop_plant_button = { slot.x + (col_width)/4, slot.y + row_height - 30, (col_width) / 4, 30 };
-                    if (GuiButton(stop_plant_button, "Stop"))
+                    if (GuiButton(stop_plant_button, "Stop") && !is_popup_open)
                     {
                         game_state->Power_plants[i].status = 0;
                     }
                     Rectangle regenerate_plant_button = { slot.x + (col_width)/2, slot.y + row_height - 30, (col_width) / 4, 30 };
-                    if (GuiButton(regenerate_plant_button, "Start"))
+                    if (GuiButton(regenerate_plant_button, "Start") && !is_popup_open)
                     {
                         game_state->Power_plants[i].status = 2;
                     }
                     Rectangle auto_plant_button = { slot.x + ((col_width)/4)*3, slot.y + row_height - 30, (col_width) / 4, 30 };
-                    if (GuiButton(auto_plant_button, "Auto"))
+                    if (GuiButton(auto_plant_button, "Auto") && !is_popup_open)
                     {
                         game_state->Power_plants[i].status = 3;
                     }
@@ -163,22 +166,22 @@ void render_top_zone(GameState *game_state)
                     DrawText(TextFormat("Battery"), slot.x + 5, slot.y + 5, 10, BLACK);
                     DrawText(TextFormat("%d kW / %d kW | %d kWh / %d kWh", game_state->Power_plants[i].power_generation, game_state->Power_plants[i].power_max,game_state->Power_plants[i].capacity,game_state->Power_plants[i].max_capacity),slot.x + 5, slot.y + 25, plant_info_text_size, BLACK);
                     Rectangle start_plant_button = { slot.x, slot.y + row_height - 30, (col_width) / 4, 30 };
-                    if (GuiButton(start_plant_button, "Charge"))
+                    if (GuiButton(start_plant_button, "Charge") && !is_popup_open)
                     {
                         game_state->Power_plants[i].status = 1;
                     }
                     Rectangle stop_plant_button = { slot.x + (col_width)/4, slot.y + row_height - 30, (col_width) / 4, 30 };
-                    if (GuiButton(stop_plant_button, "Stop"))
+                    if (GuiButton(stop_plant_button, "Stop") && !is_popup_open)
                     {
                         game_state->Power_plants[i].status = 0;
                     }
                     Rectangle regenerate_plant_button = { slot.x + (col_width)/2, slot.y + row_height - 30, (col_width) / 4, 30 };
-                    if (GuiButton(regenerate_plant_button, "Start"))
+                    if (GuiButton(regenerate_plant_button, "Start") && !is_popup_open)
                     {
                         game_state->Power_plants[i].status = 2;
                     }
                     Rectangle auto_plant_button = { slot.x + ((col_width)/4)*3, slot.y + row_height - 30, (col_width) / 4, 30 };
-                    if (GuiButton(auto_plant_button, "Auto"))
+                    if (GuiButton(auto_plant_button, "Auto") && !is_popup_open)
                     {
                         game_state->Power_plants[i].status = 3;
                     }
@@ -187,33 +190,25 @@ void render_top_zone(GameState *game_state)
             case 6:
                 {
                     DrawText(TextFormat("Coal"), slot.x + 5, slot.y + 5, 10, BLACK);
-                    DrawText(TextFormat("%d kW / %dkW", game_state->Power_plants[i].power_generation, min(game_state->Power_plants[i].power_max,game_state->Power_plants[i].aimed_power_generation)),slot.x + 5, slot.y + 25, plant_info_text_size, BLACK);
+                    DrawText(TextFormat("%d kW / %dkW", game_state->Power_plants[i].power_generation, game_state->Power_plants[i].power_max),slot.x + 5, slot.y + 25, plant_info_text_size, BLACK);
                     Rectangle start_plant_button = { slot.x+2, slot.y + row_height - 30, (col_width-4) / 2, 30 };
-                    if (GuiButton(start_plant_button, "Start"))
-                    {
-                        game_state->Power_plants[i].status = 1;
-                    }
-                    Rectangle stop_plant_button = { slot.x + (col_width+2)/2, slot.y + row_height - 30, (col_width-4) / 2, 30 };
-                    if (GuiButton(stop_plant_button, "Stop"))
-                    {
-                        game_state->Power_plants[i].status = 0;
-                    }
+
+
+                    float slider_value = (float)game_state->Power_plants[i].aimed_power_generation;
+                    Rectangle slider_rect = { slot.x + 40, slot.y + row_height - 30, col_width - 100, 20 };
+                    GuiSlider(slider_rect, "0%", "100%", &slider_value, 0.0f, game_state->Power_plants[i].power_max);
+                    game_state->Power_plants[i].aimed_power_generation = (int)slider_value;
                     break;
                 }
             case 7:
                 {
                     DrawText(TextFormat("Atom Plant"), slot.x + 5, slot.y + 5, 10, BLACK);
-                    DrawText(TextFormat("%d kW / %dkW", game_state->Power_plants[i].power_generation, min(game_state->Power_plants[i].power_max,game_state->Power_plants[i].aimed_power_generation)),slot.x + 5, slot.y + 25, plant_info_text_size, BLACK);
-                    Rectangle start_plant_button = { slot.x+2, slot.y + row_height - 30, (col_width-4) / 2, 30 };
-                    if (GuiButton(start_plant_button, "Start"))
-                    {
-                        game_state->Power_plants[i].status = 1;
-                    }
-                    Rectangle stop_plant_button = { slot.x + (col_width+2)/2, slot.y + row_height - 30, (col_width-4) / 2, 30 };
-                    if (GuiButton(stop_plant_button, "Stop"))
-                    {
-                        game_state->Power_plants[i].status = 0;
-                    }
+                    DrawText(TextFormat("%d kW / %dkW", game_state->Power_plants[i].power_generation, game_state->Power_plants[i].power_max),slot.x + 5, slot.y + 25, plant_info_text_size, BLACK);
+
+                    float slider_value = (float)game_state->Power_plants[i].aimed_power_generation;
+                    Rectangle slider_rect = { slot.x + 40, slot.y + row_height - 30, col_width - 100, 20 };
+                    GuiSlider(slider_rect, "0%", "100%", &slider_value, 0.0f, game_state->Power_plants[i].power_max);
+                    game_state->Power_plants[i].aimed_power_generation = (int)slider_value;
                     break;
                 }
         }
