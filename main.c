@@ -4,7 +4,7 @@
 #include "simulation.h"
 
 
-#define SIMULATION_INTERVAL 0.5f // 500ms
+#define SIMULATION_INTERVAL 0.7f // 500ms
 
 int main(void)
 {
@@ -38,6 +38,8 @@ int main(void)
         render_top_zone(&game_state);
         render_dashboard(&game_state);
         render_stability_gauge(&game_state);
+        render_power_graph(&game_state);
+        render_day_info(&game_state);
 
         if (is_shop_open)
         {

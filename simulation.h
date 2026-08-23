@@ -37,10 +37,20 @@ typedef struct
 
 typedef struct
 {
+    int demand_history[100];
+    int generation_history[100];
+    int history_index; // Index of the last entry in the history when 100 then move the whole array and delete the last
+}GraphData_t;
+
+typedef struct
+{
     PowerPlant_t Power_plants[8]; // 8 Power plants
     GridState_t GridState;
+    GraphData_t GraphData;
 
 }GameState;
+
+
 
 
 
@@ -49,5 +59,7 @@ void simulation_update(GameState *game_state, float delta_time);// Game goes one
 bool simulation_build_plant(GameState *game_state, int slot, int type); // Slot 0 - 7; type: 0 = no plant; 1 = Solar; 2 = Wind_turbine; 3 = Water; 4 = pump; 5 = battery; 6 = Coal; 7 = Atom Plant;
 
 void simulation_init(GameState *game_state);
+
+bool is_storage(int type);
 
 #endif //POWER_GAME_SIMULATION_H

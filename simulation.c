@@ -8,7 +8,7 @@
 #define DEVIATION_INTERVAL 3.0f     // seconds between random weather noise ticks
 #define USER_GROWTH_INTERVAL 10.0f  // seconds between user count changes
 
-static bool is_storage(int type)
+bool is_storage(int type)
 {
     return type == 4 || type == 5; // 4 = Pump, 5 = Battery
 }
@@ -37,22 +37,19 @@ bool simulation_build_plant(GameState *game_state, int slot, int type)
 // Storage (pump/battery) is handled separately in simulation_update.
 static void update_plant(PowerPlant_t *plant, float time_of_day, bool do_deviation_tick)
 {
-    if (plant->type == 0 || plant->status == 0)
-    {
-        plant->power_generation = 0;
-        return;
-    }
-
-    if (is_storage(plant->type)) return;
-
-    // max_step = how much power_generation can change this tick (reaction speed)
-    int max_step = plant->power_max / plant->reaction_time;
-    if (max_step < 1) max_step = 1;
-
+    // Off or empty slot: ramp down to 0 just like everything else, not an instant cut
     int target;
     float solar_factor = 0.0f;
 
-    if (plant->type == 1) // Solar: target follows day/night curve
+    if (plant->type == 0 || plant->status == 0)
+    {
+        target = 0;
+    }
+    else if (is_storage(plant->type))
+    {
+        return; // handled separately in simulation_update
+    }
+    else if (plant->type == 1) // Solar: target follows day/night curve
     {
         solar_factor = solar_output_factor(time_of_day);
         target = (int)(plant->power_max * solar_factor);
@@ -66,14 +63,17 @@ static void update_plant(PowerPlant_t *plant, float time_of_day, bool do_deviati
         target = plant->aimed_power_generation;
     }
 
-    // Ramp power_generation towards target, limited by max_step
+    int max_step = plant->power_max / plant->reaction_time;
+    if (max_step < 1) max_step = 1;
+
+    // Ramp power_generation towards target in both directions, limited by max_step
     int diff = target - plant->power_generation;
     if (diff > max_step) diff = max_step;
     else if (diff < -max_step) diff = -max_step;
     plant->power_generation += diff;
 
     // Random weather noise, only every few seconds, and never pushes solar above 0 at night
-    if (plant->max_power_deviation > 0 && do_deviation_tick)
+    if (plant->type != 0 && plant->status != 0 && plant->max_power_deviation > 0 && do_deviation_tick)
     {
         bool solar_is_night = (plant->type == 1 && solar_factor <= 0.0f);
 
@@ -82,7 +82,6 @@ static void update_plant(PowerPlant_t *plant, float time_of_day, bool do_deviati
             float deviation = rand_deviation() * plant->power_deviation_per_tick;
             int offset = plant->power_generation - target;
 
-            // If already at the edge of allowed deviation, push back towards center
             if (offset >= plant->max_power_deviation && deviation > 0) deviation = -deviation;
             else if (offset <= -plant->max_power_deviation && deviation < 0) deviation = -deviation;
 
@@ -99,16 +98,14 @@ static int calculate_satisfaction(GameState *game_state)
 {
     int satisfaction = 100;
 
-    // Stability is the main factor: 0 = perfect (100 sat), 100 = fully unstable (0 sat)
     int stability_abs = abs(game_state->GridState.stability);
-    satisfaction -= stability_abs; // 1:1, dominates the result
+    satisfaction -= stability_abs;
 
-    // Price and emissions only matter a little, as tie-breakers
     int generation_safe = max(1, game_state->GridState.power_generation);
     int price_per_unit = game_state->GridState.power_cost / generation_safe;
-    satisfaction -= price_per_unit / 50; // barely noticeable
+    satisfaction -= price_per_unit / 50;
 
-    satisfaction -= game_state->GridState.total_emissions / 200; // barely noticeable
+    satisfaction -= game_state->GridState.total_emissions / 200;
 
     if (satisfaction > 100) satisfaction = 100;
     if (satisfaction < 0) satisfaction = 0;
@@ -170,7 +167,7 @@ void simulation_update(GameState *game_state, float delta_time)
         }
     }
 
-    // 6. Apply storage actions (charge/discharge), ramped by max_step just like normal plants
+    // 6. Apply storage actions (charge/discharge), ramped by max_step in both directions
     for (int i = 0; i < 8; i++)
     {
         PowerPlant_t *p = &game_state->Power_plants[i];
@@ -179,7 +176,7 @@ void simulation_update(GameState *game_state, float delta_time)
         int max_step = p->power_max / p->reaction_time;
         if (max_step < 1) max_step = 1;
 
-        // desired_action: positive = discharge (feed grid), negative = charge (draw from grid)
+        // desired_action: positive = discharge (feed grid), negative = charge (draw from grid), 0 = idle/off
         int desired_action = 0;
 
         if (p->status == 1) // manual charge - only if grid actually has surplus (no free energy!)
@@ -206,9 +203,9 @@ void simulation_update(GameState *game_state, float delta_time)
                 desired_action = min(share, can_discharge);
             }
         }
+        // status == 0: desired_action stays 0 -> ramps power_generation down to 0, not instant off
 
-        // Ramp power_generation towards desired_action, limited by max_step
-        // (this is what actually lets it reach full power_max over a few ticks)
+        // Ramp power_generation towards desired_action, limited by max_step, in both directions
         int diff = desired_action - p->power_generation;
         if (diff > max_step) diff = max_step;
         else if (diff < -max_step) diff = -max_step;
@@ -268,6 +265,23 @@ void simulation_update(GameState *game_state, float delta_time)
             if (game_state->GridState.power_user_count < 0) game_state->GridState.power_user_count = 0;
         }
     }
+
+    // 9. Update graph history (shifting ring buffer)
+    game_state->GraphData.demand_history[game_state->GraphData.history_index] = game_state->GridState.power_demand;
+    game_state->GraphData.generation_history[game_state->GraphData.history_index] = game_state->GridState.power_generation;
+
+    if (game_state->GraphData.history_index < 99)
+    {
+        game_state->GraphData.history_index++;
+    }
+    else
+    {
+        for (int i = 0; i < 99; i++)
+        {
+            game_state->GraphData.demand_history[i] = game_state->GraphData.demand_history[i + 1];
+            game_state->GraphData.generation_history[i] = game_state->GraphData.generation_history[i + 1];
+        }
+    }
 }
 
 void simulation_init(GameState *game_state)
@@ -281,11 +295,19 @@ void simulation_init(GameState *game_state)
     game_state->GridState.user_growth_timer = 0.0f;
     game_state->GridState.deviation_timer = 0.0f;
 
+    game_state->GraphData.history_index = 0;
+
     game_state->Power_plants[0] = plant_defaults[1]; // Solar
     game_state->Power_plants[1] = plant_defaults[4]; // Pump
 
     for (int i = 2; i < 8; i++)
     {
         game_state->Power_plants[i] = plant_defaults[0]; // empty slots
+    }
+
+    for (int i = 0; i < 100; i++)
+    {
+        game_state->GraphData.demand_history[i] = 0;
+        game_state->GraphData.generation_history[i] = 0;
     }
 }

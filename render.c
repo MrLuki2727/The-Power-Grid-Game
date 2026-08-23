@@ -226,6 +226,46 @@ void render_top_zone(GameState *game_state)
             (Rectangle){0, 0, tex.width, tex.height},
             icon_dest, (Vector2){0,0}, 0.0f, WHITE);
 
+        if (!game_state->Power_plants[i].type == 0)
+        {
+            float percentage;
+            if (is_storage(game_state->Power_plants[i].type))
+            {
+                percentage = (float)game_state->Power_plants[i].capacity / (float)game_state->Power_plants[i].max_capacity;
+            }
+            else
+            {
+                percentage = (float)game_state->Power_plants[i].power_generation / (float)game_state->Power_plants[i].power_max;
+            }
+            if (percentage > 1.0f) percentage = 1.0f;
+            if (percentage < 0.0f) percentage = 0.0f;
+
+            int bar_height = 8;
+            int bar_y = slot.y + row_height - 45; // über den Buttons
+
+            Rectangle bar_bg = { slot.x + 5, bar_y-3, col_width - 10, bar_height+6 };
+            Rectangle bar_fill = { slot.x + 8, bar_y, (col_width - 16) * percentage, bar_height };
+
+            DrawRectangleRec(bar_bg, DARKGRAY);
+            if (percentage > 0.8f)
+            {
+                DrawRectangleRec(bar_fill, GREEN);
+            }
+            else if (percentage > 0.5f)
+            {
+                DrawRectangleRec(bar_fill, YELLOW);
+            }
+            else if (percentage > 0.2f)
+            {
+                DrawRectangleRec(bar_fill, ORANGE);
+            }
+            else
+            {
+                DrawRectangleRec(bar_fill, RED);
+            }
+
+        }
+
     }
 
 }
@@ -319,4 +359,64 @@ void render_shop(GameState *game_state)
         }
         shop_just_opened = false;
 
+}
+void render_power_graph(GameState* game_state)
+{
+
+
+    int screen_w = GetScreenWidth();
+    int screen_h = GetScreenHeight();
+
+    int dashboard_y = screen_h * 0.8f;
+    int dashboard_h = screen_h - dashboard_y;
+
+    int graph_w = screen_w * 0.3f;
+    int graph_h = dashboard_h * 0.7f;
+
+    int graph_x = screen_w - graph_w - 20;
+    int graph_y = dashboard_y + (dashboard_h - graph_h) / 2;
+
+    //background rectangle
+    DrawRectangle(graph_x, graph_y, graph_w, graph_h, (Color){0, 0, 0, 100});
+    DrawRectangleLinesEx((Rectangle){graph_x, graph_y, graph_w, graph_h}, 2, WHITE);
+
+    // find max value
+    int max_value = 1;
+    for (int i = 0; i < 100; i++)
+    {
+        if (game_state->GraphData.demand_history[i] > max_value) max_value = game_state->GraphData.demand_history[i];
+        if (game_state->GraphData.generation_history[i] > max_value) max_value = game_state->GraphData.generation_history[i];
+    }
+
+    //calculate points for graph
+    Vector2 demand_points[100];
+    Vector2 generation_points[100];
+
+    for (int i = 0; i < 100; i++)
+    {
+        int idx = (game_state->GraphData.history_index + i) % 100;
+
+        float x = graph_x + (float)i / (100- 1) * graph_w;
+
+        float y_demand = graph_y + graph_h - ((float)game_state->GraphData.demand_history[idx] / max_value) * graph_h;
+        float y_gen = graph_y + graph_h - ((float)game_state->GraphData.generation_history[idx] / max_value) * graph_h;
+
+        demand_points[i] = (Vector2){x, y_demand};
+        generation_points[i] = (Vector2){x, y_gen};
+    }
+
+    //draw lines
+    DrawLineStrip(demand_points, 100, RED);
+    DrawLineStrip(generation_points, 100, GREEN);
+
+    //information
+    DrawText("Demand", graph_x, graph_y - 15, 10, RED);
+    DrawText("Generation", graph_x + 60, graph_y - 15, 10, GREEN);
+
+
+}
+void render_day_info(GameState* game_state)
+{
+    int screen_w = GetScreenWidth();
+    int screen_h = GetScreenHeight();
 }
