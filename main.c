@@ -14,7 +14,7 @@ int main(void)
 
     SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
     InitWindow(900, 650, "Power Grid Game");
-    SetTargetFPS(60);
+    //SetTargetFPS(60);
     SetExitKey(KEY_NULL);
     load_textures();
 
@@ -43,7 +43,21 @@ int main(void)
             else if (is_settings_open)
             {
                 is_settings_open = false;
+                is_menu_open = true;
+                popup_just_opened = true;
 
+            }
+            else if (is_save_game_open)
+            {
+                is_save_game_open = false;
+                is_menu_open = true;
+                popup_just_opened = true;
+            }
+            else if (is_load_game_open)
+            {
+                is_load_game_open = false;
+                is_menu_open = true;
+                popup_just_opened = true;
             }
             else
             {
@@ -68,12 +82,21 @@ int main(void)
         }
         if (is_settings_open)
         {
-            //render_settings(&game_state);
+            render_settings(&game_state);
         }
         if (is_menu_open)
         {
             render_menu(&game_state);
         }
+        if (is_save_game_open)
+        {
+            render_save_game_popup(&game_state);
+        }
+        if (is_load_game_open)
+        {
+            render_load_game_popup(&game_state);
+        }
         EndDrawing();
+        popup_just_opened = false;
     }
 }

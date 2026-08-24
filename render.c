@@ -4,6 +4,7 @@
 #include "raylib.h"
 #include <stdio.h>
 #include "plant.h"
+#include "embedded_images.h"
 
 int shop_target_plant = 0;
 bool is_popup_open = false;
@@ -12,6 +13,9 @@ bool popup_just_opened = false;
 bool is_shop_open = 0;
 bool is_menu_open = 0;
 bool is_settings_open = 0;
+bool is_save_game_open = 0;
+bool is_load_game_open = 0;
+
 
 
 
@@ -19,14 +23,39 @@ Texture2D plant_icons[8];
 
 void load_textures(void)
 {
-    plant_icons[0] = LoadTexture("Pictures/no_power_plant.png");
-    plant_icons[1] = LoadTexture("Pictures/solar.png");
-    plant_icons[2] = LoadTexture("Pictures/wind.png");
-    plant_icons[3] = LoadTexture("Pictures/water_power_plant.png");
-    plant_icons[4] = LoadTexture("Pictures/pump_power_plant.png");
-    plant_icons[5] = LoadTexture("Pictures/battery.png");
-    plant_icons[6] = LoadTexture("Pictures/coal_power_plant.png");
-    plant_icons[7] = LoadTexture("Pictures/nuclear_power_plant.png");
+    Image img;
+
+    img = LoadImageFromMemory(".png", no_power_plant_png, no_power_plant_png_size);
+    plant_icons[0] = LoadTextureFromImage(img);
+    UnloadImage(img);
+
+    img = LoadImageFromMemory(".png", solar_png, solar_png_size);
+    plant_icons[1] = LoadTextureFromImage(img);
+    UnloadImage(img);
+
+    img = LoadImageFromMemory(".png", wind_png, wind_png_size);
+    plant_icons[2] = LoadTextureFromImage(img);
+    UnloadImage(img);
+
+    img = LoadImageFromMemory(".png", water_power_plant_png, water_power_plant_png_size);
+    plant_icons[3] = LoadTextureFromImage(img);
+    UnloadImage(img);
+
+    img = LoadImageFromMemory(".png", pump_power_plant_png, pump_power_plant_png_size);
+    plant_icons[4] = LoadTextureFromImage(img);
+    UnloadImage(img);
+
+    img = LoadImageFromMemory(".png", battery_png, battery_png_size);
+    plant_icons[5] = LoadTextureFromImage(img);
+    UnloadImage(img);
+
+    img = LoadImageFromMemory(".png", coal_power_plant_png, coal_power_plant_png_size);
+    plant_icons[6] = LoadTextureFromImage(img);
+    UnloadImage(img);
+
+    img = LoadImageFromMemory(".png", nuclear_power_plant_png, nuclear_power_plant_png_size);
+    plant_icons[7] = LoadTextureFromImage(img);
+    UnloadImage(img);
 }
 
 
@@ -360,7 +389,7 @@ void render_shop(GameState *game_state)
             is_popup_open = false;
             is_shop_open = false;
         }
-        popup_just_opened = false;
+
 
 }
 void render_power_graph(GameState* game_state)
@@ -498,24 +527,146 @@ void render_menu(GameState *game_state)
         Rectangle save_game_button = { panel_x + 20, panel_y + 60+2 * (button_h + 10), panel_w - 40, button_h };
         if (GuiButton(save_game_button, "Save Game"))
         {
-            //TODO Implement save game
-            //save_game(game_state);
+
+            is_menu_open = false;
+            popup_just_opened = true;
+            is_save_game_open = true;
+
         }
         Rectangle load_game_button = { panel_x + 20, panel_y + 60+3 * (button_h + 10), panel_w - 40, button_h };
         if (GuiButton(load_game_button, "Load Game"))
         {
-            //TODO Implement load game
-            //load_game(game_state);
+
+            is_menu_open = false;
+            popup_just_opened = true;
+            is_load_game_open = true;
+
         }
         Rectangle settings_button = { panel_x + 20, panel_y + 60+4 * (button_h + 10), panel_w - 40, button_h };
         if (GuiButton(settings_button, "Settings"))
         {
+            is_menu_open = false;
             popup_just_opened = true;
             is_settings_open = true;
         }
 
 
+}
 
-    popup_just_opened = false;
+void render_save_game_popup(GameState* game_state)
+{
+    is_popup_open = true;
+    is_menu_open = false;
+    int screen_w = GetScreenWidth();
+    int screen_h = GetScreenHeight();
+
+
+    DrawRectangle(0, 0, screen_w, screen_h, (Color){0, 0, 0, 180});
+
+    int panel_w = 400;
+    int panel_h = 250;
+    int panel_x = (screen_w - panel_w) / 2;
+    int panel_y = (screen_h - panel_h) / 2;
+
+    DrawRectangle(panel_x, panel_y, panel_w, panel_h, DARKGRAY);
+    DrawText("SAVE GAME", panel_x + 20, panel_y + 20, 24, WHITE);
+
+    int button_h = 40;
+    Rectangle back_to_game_button = { panel_x + 20, panel_y + 180, panel_w - 40, button_h };
+    if (GuiButton(back_to_game_button, "Back") && !popup_just_opened)
+    {
+        is_save_game_open = false;
+        is_menu_open = true;
+        popup_just_opened = true;
+
+    }
+
+    static char filename_buffer[64] = "game_save_name";
+    static bool text_box_edit_mode = false;
+
+    Rectangle textbox_rect = { panel_x+20, panel_y+100, 260, 30 };
+    Rectangle save_button_rect = { panel_x + 290, panel_y+100, 80, 30 };
+
+    if (GuiTextBox(textbox_rect, filename_buffer, 64, text_box_edit_mode))
+    {
+        text_box_edit_mode = !text_box_edit_mode;
+    }
+
+    if (GuiButton(save_button_rect, "Save") && !popup_just_opened)
+    {
+        char full_path[80];
+        sprintf(full_path, "%s.dat", filename_buffer); // z.B. "savegame.dat"
+        if (save_game(game_state, full_path))
+        {
+            is_save_game_open = false;
+            is_menu_open = true;
+            popup_just_opened = true;
+        }
+
+    }
+
 
 }
+
+void render_load_game_popup(GameState* game_state)
+{
+    is_popup_open = true;
+    is_menu_open = false;
+    int screen_w = GetScreenWidth();
+    int screen_h = GetScreenHeight();
+
+
+    DrawRectangle(0, 0, screen_w, screen_h, (Color){0, 0, 0, 180});
+
+    int panel_w = 400;
+    int panel_h = 250;
+    int panel_x = (screen_w - panel_w) / 2;
+    int panel_y = (screen_h - panel_h) / 2;
+
+    DrawRectangle(panel_x, panel_y, panel_w, panel_h, DARKGRAY);
+    DrawText("LOAD GAME", panel_x + 20, panel_y + 20, 24, WHITE);
+
+    int button_h = 40;
+    Rectangle back_to_game_button = { panel_x + 20, panel_y + 180, panel_w - 40, button_h };
+    if (GuiButton(back_to_game_button, "Back") && !popup_just_opened)
+    {
+        is_load_game_open = false;
+        is_menu_open = true;
+        popup_just_opened = true;
+
+    }
+
+    static char filename_buffer[64] = "game_save_name";
+    static bool text_box_edit_mode = false;
+
+    Rectangle textbox_rect = { panel_x+20, panel_y+100, 260, 30 };
+    Rectangle load_button_rect = { panel_x + 290, panel_y+100, 80, 30 };
+
+    if (GuiTextBox(textbox_rect, filename_buffer, 64, text_box_edit_mode))
+    {
+        text_box_edit_mode = !text_box_edit_mode;
+    }
+
+    if (GuiButton(load_button_rect, "Load") && !popup_just_opened)
+    {
+        char full_path[80];
+        sprintf(full_path, "%s.dat", filename_buffer);
+        if (load_game(game_state, full_path))
+        {
+            is_load_game_open = false;
+            is_menu_open = true;
+            popup_just_opened = true;
+        }
+    }
+
+
+}
+
+void render_settings(GameState* game_state)
+{
+    is_popup_open = true;
+
+
+
+}
+

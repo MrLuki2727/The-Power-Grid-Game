@@ -63,5 +63,7 @@ void simulation_init(GameState *game_state);
 
 bool is_storage(int type);
 bool is_regulatable(int type);
+bool save_game(GameState *game_state, const char *filename);
+bool load_game(GameState *game_state, const char *filename);
 
 #endif //POWER_GAME_SIMULATION_H

@@ -1,5 +1,8 @@
 #include <stdlib.h>
 #include "simulation.h"
+
+#include <stdio.h>
+
 #include "plant.h"
 
 #define min(a,b) ((a) < (b) ? (a) : (b))
@@ -316,7 +319,7 @@ void simulation_update(GameState *game_state, float delta_time)
 
 void simulation_init(GameState *game_state)
 {
-    game_state->GridState.money = 10000;
+    game_state->GridState.money = 100;
     game_state->GridState.power_user_count = 10;
     game_state->GridState.stability = 0;
     game_state->GridState.satisfaction = 50;
@@ -340,4 +343,36 @@ void simulation_init(GameState *game_state)
         game_state->GraphData.demand_history[i] = 0;
         game_state->GraphData.generation_history[i] = 0;
     }
+}
+bool save_game(GameState *game_state, const char *filename)
+{
+    FILE *file = fopen(filename, "wb");
+    if (file == NULL) return false;
+
+    int version = 1;
+    fwrite(&version, sizeof(int), 1, file);
+    fwrite(game_state, sizeof(GameState), 1, file);
+    fclose(file);
+
+    return true;
+}
+
+bool load_game(GameState *game_state, const char *filename)
+{
+    FILE *file = fopen(filename, "rb");
+    if (file == NULL) return false;
+
+    int version;
+    fread(&version, sizeof(int), 1, file);
+
+    if (version != 1) // Struct-Version stimmt nicht -> alter Save, ignorieren
+    {
+        fclose(file);
+        return false;
+    }
+
+    fread(game_state, sizeof(GameState), 1, file);
+    fclose(file);
+
+    return true;
 }
