@@ -327,7 +327,7 @@ void simulation_init(GameState *game_state)
     game_state->GridState.day_length_seconds = 300.0f;
     game_state->GridState.user_growth_timer = 0.0f;
     game_state->GridState.deviation_timer = 0.0f;
-
+    game_state->is_playing = false;
     game_state->GraphData.history_index = 0;
 
     game_state->Power_plants[0] = plant_defaults[1]; // Solar

@@ -2,6 +2,7 @@
 #include "raylib.h"
 #include "render.h"
 #include "simulation.h"
+#include "embedded_images.h"
 
 
 #define SIMULATION_INTERVAL 0.7f // 500ms
@@ -17,22 +18,35 @@ int main(void)
     //SetTargetFPS(60);
     SetExitKey(KEY_NULL);
     load_textures();
+    Image icon = LoadImageFromMemory(".png", logo_png, logo_png_size);
+    SetWindowIcon(icon);
+    if (icon.data == NULL || icon.width == 0) {
+        TraceLog(LOG_ERROR, "ICON FEHLER: Bild konnte nicht geladen werden! Size: %u", logo_png_size);
+    } else {
+        TraceLog(LOG_INFO, "ICON SUCCESS: Geladen mit %dx%d Pixel", icon.width, icon.height);
+        SetWindowIcon(icon);
+    }
+    UnloadImage(icon);
+
 
     float sim_timer = 0.0f;
-    while (!WindowShouldClose())
+    float title_time = 0.0f;
+    while (!WindowShouldClose() && !quit_game)
     {
-        if (!is_popup_open)
-        {
-            float delta_time = GetFrameTime();
-            sim_timer += delta_time;
-        }
-        if (sim_timer >= SIMULATION_INTERVAL)
-        {
-            simulation_update(&game_state, SIMULATION_INTERVAL);
-            sim_timer -= SIMULATION_INTERVAL;
-        }
+        float delta_time = GetFrameTime();
 
-        if (IsKeyPressed(KEY_ESCAPE))
+        if (!is_popup_open && game_state.is_playing)
+        {
+
+            sim_timer += delta_time;
+
+            if (sim_timer >= SIMULATION_INTERVAL)
+            {
+                simulation_update(&game_state, SIMULATION_INTERVAL);
+                sim_timer -= SIMULATION_INTERVAL;
+            }
+        }
+        if (IsKeyPressed(KEY_ESCAPE) && game_state.is_playing)
         {
             is_popup_open = !is_popup_open;
             if (is_shop_open)
@@ -70,12 +84,19 @@ int main(void)
 
         BeginDrawing();
         ClearBackground(BLACK);
-        render_top_zone(&game_state);
-        render_dashboard(&game_state);
-        render_stability_gauge(&game_state);
-        render_power_graph(&game_state);
-        render_day_night_indicator(&game_state);
-
+        if (game_state.is_playing)
+        {
+            render_top_zone(&game_state);
+            render_dashboard(&game_state);
+            render_stability_gauge(&game_state);
+            render_power_graph(&game_state);
+            render_day_night_indicator(&game_state);
+        }
+        else
+        {
+            title_time += delta_time;
+            render_title_screen(&game_state, title_time);
+        }
         if (is_shop_open)
         {
             render_shop(&game_state);

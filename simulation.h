@@ -34,6 +34,7 @@ typedef struct
     float deviation_timer;
     float income_timer;
 
+
 }GridState_t;
 
 typedef struct
@@ -48,7 +49,7 @@ typedef struct
     PowerPlant_t Power_plants[8]; // 8 Power plants
     GridState_t GridState;
     GraphData_t GraphData;
-
+    bool is_playing;
 }GameState;
 
 

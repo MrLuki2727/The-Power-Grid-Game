@@ -16,6 +16,7 @@ bool is_settings_open = 0;
 bool is_save_game_open = 0;
 bool is_load_game_open = 0;
 
+bool quit_game = false;
 
 
 
@@ -56,6 +57,7 @@ void load_textures(void)
     img = LoadImageFromMemory(".png", nuclear_power_plant_png, nuclear_power_plant_png_size);
     plant_icons[7] = LoadTextureFromImage(img);
     UnloadImage(img);
+
 }
 
 
@@ -506,12 +508,12 @@ void render_menu(GameState *game_state)
     DrawRectangle(0, 0, screen_w, screen_h, (Color){0, 0, 0, 180});
 
     int panel_w = 400;
-    int panel_h = 350;
+    int panel_h = 400;
     int panel_x = (screen_w - panel_w) / 2;
     int panel_y = (screen_h - panel_h) / 2;
 
     DrawRectangle(panel_x, panel_y, panel_w, panel_h, DARKGRAY);
-    DrawText("Menu", panel_x + 20, panel_y + 20, 24, WHITE);
+    DrawText("MENU", panel_x + 20, panel_y + 20, 24, WHITE);
 
 
         int button_h = 40;
@@ -548,6 +550,11 @@ void render_menu(GameState *game_state)
             is_menu_open = false;
             popup_just_opened = true;
             is_settings_open = true;
+        }
+        Rectangle quit_button = { panel_x + 20, panel_y + 60+5 * (button_h + 10), panel_w - 40, button_h };
+        if (GuiButton(quit_button, "QUIT"))
+        {
+          quit_game = true;
         }
 
 
@@ -630,9 +637,18 @@ void render_load_game_popup(GameState* game_state)
     Rectangle back_to_game_button = { panel_x + 20, panel_y + 180, panel_w - 40, button_h };
     if (GuiButton(back_to_game_button, "Back") && !popup_just_opened)
     {
-        is_load_game_open = false;
-        is_menu_open = true;
-        popup_just_opened = true;
+        if (game_state->is_playing)
+        {
+            is_load_game_open = false;
+            is_menu_open = true;
+            popup_just_opened = true;
+        }
+        else
+        {
+            is_load_game_open = false;
+            is_menu_open = false;
+            is_popup_open = false;
+        }
 
     }
 
@@ -653,9 +669,18 @@ void render_load_game_popup(GameState* game_state)
         sprintf(full_path, "%s.dat", filename_buffer);
         if (load_game(game_state, full_path))
         {
-            is_load_game_open = false;
-            is_menu_open = true;
-            popup_just_opened = true;
+            if (game_state->is_playing)
+            {
+                is_load_game_open = false;
+                is_menu_open = true;
+                popup_just_opened = true;
+            }
+            else
+            {
+                is_load_game_open = false;
+                game_state->is_playing = true;
+                is_popup_open = false;
+            }
         }
     }
 
@@ -665,8 +690,109 @@ void render_load_game_popup(GameState* game_state)
 void render_settings(GameState* game_state)
 {
     is_popup_open = true;
+    int screen_w = GetScreenWidth();
+    int screen_h = GetScreenHeight();
+
+
+    DrawRectangle(0, 0, screen_w, screen_h, (Color){0, 0, 0, 180});
+
+    int panel_w = 600;
+    int panel_h = 600;
+    int panel_x = (screen_w - panel_w) / 2;
+    int panel_y = (screen_h - panel_h) / 2;
+
+    DrawRectangle(panel_x, panel_y, panel_w, panel_h, DARKGRAY);
+    DrawText("SETTINGS", panel_x + 20, panel_y + 20, 24, WHITE);
+
+    Rectangle close_button = { panel_x + panel_w - 100, panel_y+10, 80, 30 };
+    if (GuiButton(close_button, "Close"))
+    {
+        if (game_state->is_playing)
+        {
+            is_settings_open = false;
+            is_menu_open = true;
+            popup_just_opened = true;
+        }
+        else
+        {
+            is_settings_open = false;
+            is_popup_open = false;
+        }
+
+
+    }
+    int button_h = 40;
+            Rectangle toggle_fullscreen_button = { panel_x + 20, panel_y + 100, panel_w - 40, button_h };
+            if (GuiButton(toggle_fullscreen_button, "Toggle Fullscreen") && !popup_just_opened)
+            {
+                ToggleFullscreen();
+            }
 
 
 
+
+
+
+
+}
+void render_title_screen(GameState* game_state, float time)
+{
+    int screen_w = GetScreenWidth();
+    int screen_h = GetScreenHeight();
+
+    // Sanfter Farbverlauf, der sich langsam über Zeit verschiebt
+    float shift = sinf(time * 0.1f) * 0.5f + 0.5f; // 0.0 - 1.0, langsam oszillierend
+
+    Color top = ColorLerp((Color){20, 30, 60, 255}, (Color){40, 50, 90, 255}, shift);
+    Color bottom = (Color){10, 15, 30, 255};
+
+    DrawRectangleGradientV(0, 0, screen_w, screen_h, top, bottom);
+
+    const char *title = "POWER GRID";
+    int font_size = screen_w * 0.06f;
+    int text_width = MeasureText(title, font_size);
+
+    int x = screen_w / 2 - text_width / 2;
+    int y = screen_h * 0.25f;
+
+    // Schatten (leicht versetzt, dunkler)
+    DrawText(title, x + 4, y + 4, font_size, (Color){0, 0, 0, 150});
+    // Haupttext
+    DrawText(title, x, y, font_size, WHITE);
+
+    const char *subtitle = "GAME";
+    int sub_size = font_size * 0.4f;
+    int sub_width = MeasureText(subtitle, sub_size);
+    DrawText(subtitle, screen_w / 2 - sub_width / 2, y + font_size + 5, sub_size, (Color){200, 200, 200, 255});
+
+    int button_w = screen_w * 0.25f;
+    int button_h = 50;
+    int center_x = screen_w / 2 - button_w / 2;
+
+    GuiSetStyle(DEFAULT, TEXT_SIZE, 20);
+
+    Rectangle play_button = { center_x, screen_h * 0.55f, button_w, button_h };
+    if (GuiButton(play_button, "PLAY")&& !is_popup_open)
+    {
+        game_state->is_playing = true;
+    }
+
+    Rectangle load_button = { center_x, screen_h * 0.55f + 60, button_w, button_h };
+    if (GuiButton(load_button, "LOAD GAME")&& !is_popup_open)
+    {
+        popup_just_opened = true;
+        is_load_game_open = true;
+    }
+    Rectangle settings_button = { center_x, screen_h * 0.55f + 120, button_w, button_h };
+    if (GuiButton(settings_button, "SETTINGS")&& !is_popup_open)
+    {
+        popup_just_opened = true;
+        is_settings_open = true;
+    }
+    Rectangle quit_button = { center_x, screen_h * 0.55f + 180, button_w, button_h };
+    if (GuiButton(quit_button, "QUIT")&& !is_popup_open)
+    {
+        quit_game = true;
+    }
 }
 
