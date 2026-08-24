@@ -41,3 +41,4 @@ All included pictures are from flaticon.com:
 <a href="https://www.flaticon.com/free-icons/nuclear" title="nuclear icons">Nuclear icons created by Magnific - Flaticon</a>,
 <a href="https://www.flaticon.com/free-icons/battery" title="battery icons">Battery icons created by Magnific - Flaticon</a>,
 <a href="https://www.flaticon.com/free-icons/hydropower" title="hydropower icons">Hydropower icons created by IYIKON - Flaticon</a>
+<a href="https://www.flaticon.com/free-icons/lightning" title="lightning icons">Lightning icons created by Magnific - Flaticon</a>
