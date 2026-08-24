@@ -27,7 +27,7 @@ A game about controlling and stabilizing the power grid. Manage different power 
 3. Let CMake fetch and build raylib automatically (via `FetchContent`)
 4. Build and run the `Power_Game` target
 
-Alternatively, if a prebuilt `.exe` is provided, just run it directly — no installation needed.
+Alternatively, if a prebuilt `.exe` is provided, just run it directly - no installation needed.
 
 ## Credits
 
