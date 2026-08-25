@@ -16,6 +16,11 @@ typedef struct
     int power_deviation_per_tick; // How much the power production can very every tick
     int emission_factor; //How much emission the plant produces per tick;
     int aimed_power_generation; // Power generation that the plant is aiming for (-1 = no regulation)
+
+    int upgrade_level;
+    int upgrade_cost;
+    int capacity_boost;
+    int power_boost;
 }PowerPlant_t;
 
 typedef struct

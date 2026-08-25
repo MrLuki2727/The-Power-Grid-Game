@@ -6,15 +6,16 @@
 #include "plant.h"
 #include "embedded_images.h"
 
-int shop_target_plant = 0;
+int target_plant = 0;
 bool is_popup_open = false;
 bool popup_just_opened = false;
 
-bool is_shop_open = 0;
-bool is_menu_open = 0;
-bool is_settings_open = 0;
-bool is_save_game_open = 0;
-bool is_load_game_open = 0;
+bool is_shop_open = false;
+bool is_menu_open = false;
+bool is_settings_open = false;
+bool is_save_game_open = false;
+bool is_load_game_open = false;
+bool is_upgrade_open = false;
 
 bool quit_game = false;
 
@@ -114,7 +115,7 @@ void render_top_zone(GameState *game_state)
                     {
                         popup_just_opened = true;
                         is_shop_open = true;
-                        shop_target_plant = i;
+                        target_plant = i;
                     }
                     break;
                 }
@@ -254,9 +255,27 @@ void render_top_zone(GameState *game_state)
             icon_size
         };
 
+        Color icon_tint = WHITE;
+        if (game_state->Power_plants[i].type != 0 && !is_popup_open &&
+            CheckCollisionPointRec(GetMousePosition(), icon_dest))
+        {
+            icon_tint = (Color){200, 200, 255, 200}; // leicht transparent beim Hover
+        }
+
         DrawTexturePro(tex,
             (Rectangle){0, 0, tex.width, tex.height},
-            icon_dest, (Vector2){0,0}, 0.0f, WHITE);
+            icon_dest, (Vector2){0,0}, 0.0f, icon_tint);
+
+        if (game_state->Power_plants[i].type != 0 && !is_popup_open)
+        {
+            if (CheckCollisionPointRec(GetMousePosition(), icon_dest) &&
+                IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+            {
+                popup_just_opened = true;
+                is_upgrade_open = true;
+                target_plant = i;
+            }
+        }
 
         if (!game_state->Power_plants[i].type == 0)
         {
@@ -356,7 +375,7 @@ void render_shop(GameState *game_state)
 
         DrawRectangle(0, 0, screen_w, screen_h, (Color){0, 0, 0, 180});
 
-        int panel_w = screen_w * 0.5f;
+        int panel_w = 400;
         int panel_h = 400;
         int panel_x = (screen_w - panel_w) / 2;
         int panel_y = (screen_h - panel_h) / 2;
@@ -376,7 +395,7 @@ void render_shop(GameState *game_state)
 
             if (GuiButton(button, label) && !popup_just_opened)
             {
-                if (simulation_build_plant(game_state, shop_target_plant, i))
+                if (simulation_build_plant(game_state, target_plant, i))
                 {
                     is_popup_open = false;
                     is_shop_open = false;
@@ -793,6 +812,68 @@ void render_title_screen(GameState* game_state, float time)
     if (GuiButton(quit_button, "QUIT")&& !is_popup_open)
     {
         quit_game = true;
+    }
+}
+
+void render_upgrade_popup(GameState* game_state)
+{
+    is_popup_open = true;
+    int screen_w = GetScreenWidth();
+    int screen_h = GetScreenHeight();
+
+    DrawRectangle(0, 0, screen_w, screen_h, (Color){0, 0, 0, 180});
+
+    int panel_w = 400;
+    int panel_h = 300;
+    int panel_x = (screen_w - panel_w) / 2;
+    int panel_y = (screen_h - panel_h) / 2;
+
+    DrawRectangle(panel_x, panel_y, panel_w, panel_h, DARKGRAY);
+
+    PowerPlant_t *p = &game_state->Power_plants[target_plant];
+
+    DrawText(TextFormat("Plant Level: %d", p->upgrade_level), panel_x + 20, panel_y + 20, 20, WHITE);
+
+    DrawText(TextFormat("Max Pow.: %d kW / Lvl.%d: %dkW", p->power_max,p->upgrade_level+1,p->power_max+p->power_boost), panel_x + 20, panel_y + 60, 20, WHITE);
+    if (p->max_capacity > 0)
+    {
+        DrawText(TextFormat("Max Cap.: %d kWh / Lvl.%d: %dkWh", p->max_capacity,p->upgrade_level+1,p->max_capacity+p->capacity_boost), panel_x + 20, panel_y + 80, 20, WHITE);
+    }
+
+    int button_h = 40;
+
+    Rectangle upgrade_button = { panel_x + 20, panel_y + 120, panel_w - 40, button_h };
+    if (GuiButton(upgrade_button, TextFormat("Upgrade (%d)", p->upgrade_cost)) && !popup_just_opened)
+    {
+
+
+        if (game_state->GridState.money >= p->upgrade_cost)
+        {
+            game_state->GridState.money -= p->upgrade_cost;
+            p->power_max += p->power_boost;
+            p->max_capacity += p->capacity_boost;
+            p->upgrade_level++;
+            is_upgrade_open = false;
+            is_popup_open = false;
+        }
+    }
+
+    Rectangle sell_button = { panel_x + 20, panel_y + 170, panel_w - 40, button_h };
+    int sell_value = (p->cost_per_unit+p->upgrade_level * p->upgrade_cost) * 0.8f;
+    if (GuiButton(sell_button, TextFormat("Sell (%d)", sell_value)) && !popup_just_opened)
+    {
+
+        game_state->GridState.money += sell_value;
+        *p = plant_defaults[0];
+        is_upgrade_open = false;
+        is_popup_open = false;
+    }
+
+    Rectangle close_button = { panel_x + 20, panel_y + 230, panel_w - 40, button_h };
+    if (GuiButton(close_button, "Close"))
+    {
+        is_upgrade_open = false;
+        is_popup_open = false;
     }
 }
 

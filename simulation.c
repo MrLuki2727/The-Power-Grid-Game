@@ -319,7 +319,7 @@ void simulation_update(GameState *game_state, float delta_time)
 
 void simulation_init(GameState *game_state)
 {
-    game_state->GridState.money = 100;
+    game_state->GridState.money = 100000;
     game_state->GridState.power_user_count = 10;
     game_state->GridState.stability = 0;
     game_state->GridState.satisfaction = 50;

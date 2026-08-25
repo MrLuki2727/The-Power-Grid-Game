@@ -10,6 +10,7 @@ extern bool is_menu_open;
 extern bool is_settings_open;
 extern bool is_save_game_open;
 extern bool is_load_game_open;
+extern bool is_upgrade_open;
 extern bool quit_game;
 
 
@@ -25,6 +26,7 @@ void render_save_game_popup(GameState* game_state);
 void render_load_game_popup(GameState* game_state);
 void render_settings(GameState* game_state);
 void render_title_screen(GameState* game_state, float time);
+void render_upgrade_popup(GameState* game_state);
 
 
 

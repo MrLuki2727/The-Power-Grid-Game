@@ -73,6 +73,10 @@ int main(void)
                 is_menu_open = true;
                 popup_just_opened = true;
             }
+            else if (is_upgrade_open)
+            {
+                is_upgrade_open = false;
+            }
             else
             {
              is_menu_open = !is_menu_open;
@@ -116,6 +120,10 @@ int main(void)
         if (is_load_game_open)
         {
             render_load_game_popup(&game_state);
+        }
+        if (is_upgrade_open)
+        {
+            render_upgrade_popup(&game_state);
         }
         EndDrawing();
         popup_just_opened = false;
