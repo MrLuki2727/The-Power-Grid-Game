@@ -20,9 +20,12 @@ int main(void)
     load_textures();
     Image icon = LoadImageFromMemory(".png", logo_png, logo_png_size);
     SetWindowIcon(icon);
-    if (icon.data == NULL || icon.width == 0) {
+    if (icon.data == NULL || icon.width == 0)
+    {
         TraceLog(LOG_ERROR, "ICON FEHLER: Bild konnte nicht geladen werden! Size: %u", logo_png_size);
-    } else {
+    }
+    else
+    {
         TraceLog(LOG_INFO, "ICON SUCCESS: Geladen mit %dx%d Pixel", icon.width, icon.height);
         SetWindowIcon(icon);
     }
@@ -35,9 +38,8 @@ int main(void)
     {
         float delta_time = GetFrameTime();
 
-        if (!is_popup_open && game_state.is_playing)
+        if (!is_popup_open && game_state.is_playing && !game_state.GridState.game_over)
         {
-
             sim_timer += delta_time;
 
             if (sim_timer >= SIMULATION_INTERVAL)
@@ -46,20 +48,18 @@ int main(void)
                 sim_timer -= SIMULATION_INTERVAL;
             }
         }
-        if (IsKeyPressed(KEY_ESCAPE) && game_state.is_playing)
+        if (IsKeyPressed(KEY_ESCAPE) && game_state.is_playing && !game_state.GridState.game_over)
         {
             is_popup_open = !is_popup_open;
             if (is_shop_open)
             {
                 is_shop_open = false;
-
             }
             else if (is_settings_open)
             {
                 is_settings_open = false;
                 is_menu_open = true;
                 popup_just_opened = true;
-
             }
             else if (is_save_game_open)
             {
@@ -79,10 +79,8 @@ int main(void)
             }
             else
             {
-             is_menu_open = !is_menu_open;
+                is_menu_open = !is_menu_open;
             }
-
-
         }
 
 
@@ -95,6 +93,14 @@ int main(void)
             render_stability_gauge(&game_state);
             render_power_graph(&game_state);
             render_day_night_indicator(&game_state);
+            if (game_state.GridState.game_over)
+            {
+                render_game_over_screen(&game_state);
+            }
+            else
+            {
+                render_blackout_warning(&game_state);
+            }
         }
         else
         {
@@ -125,6 +131,8 @@ int main(void)
         {
             render_upgrade_popup(&game_state);
         }
+
+
         EndDrawing();
         popup_just_opened = false;
     }

@@ -823,7 +823,7 @@ void render_upgrade_popup(GameState* game_state)
 
     DrawRectangle(0, 0, screen_w, screen_h, (Color){0, 0, 0, 180});
 
-    int panel_w = 400;
+    int panel_w = 420;
     int panel_h = 300;
     int panel_x = (screen_w - panel_w) / 2;
     int panel_y = (screen_h - panel_h) / 2;
@@ -832,7 +832,7 @@ void render_upgrade_popup(GameState* game_state)
 
     PowerPlant_t *p = &game_state->Power_plants[target_plant];
 
-    DrawText(TextFormat("Plant Level: %d", p->upgrade_level), panel_x + 20, panel_y + 20, 20, WHITE);
+    DrawText(TextFormat("Plant Level: %d", p->upgrade_level), panel_x + panel_w / 2 - 70, panel_y + 20, 20, WHITE);
 
     DrawText(TextFormat("Max Pow.: %d kW / Lvl.%d: %dkW", p->power_max,p->upgrade_level+1,p->power_max+p->power_boost), panel_x + 20, panel_y + 60, 20, WHITE);
     if (p->max_capacity > 0)
@@ -875,5 +875,55 @@ void render_upgrade_popup(GameState* game_state)
         is_upgrade_open = false;
         is_popup_open = false;
     }
+}
+
+void render_game_over_screen(GameState *game_state)
+{
+    int screen_w = GetScreenWidth();
+    int screen_h = GetScreenHeight();
+
+    DrawRectangle(0, 0, screen_w, screen_h, (Color){0, 0, 0, 220});
+
+    const char *text = "GRID FAILURE";
+    int font_size = screen_w * 0.06f;
+    int text_width = MeasureText(text, font_size);
+    DrawText(text, screen_w / 2 - text_width / 2, screen_h * 0.35f, font_size, RED);
+
+    DrawText(TextFormat("Users lost: %d", game_state->GridState.power_user_count),
+        screen_w / 2 - 100, screen_h * 0.5f, 20, WHITE);
+
+    Rectangle restart_button = { screen_w / 2 - 100, screen_h * 0.6f, 200, 40 };
+    if (GuiButton(restart_button, "Restart"))
+    {
+        simulation_init(game_state); // Spiel zurücksetzen
+    }
+    Rectangle quit_button = { screen_w / 2 - 100, screen_h * 0.65f, 200, 40 };
+    if (GuiButton(quit_button, "Quit"))
+    {
+        quit_game = true;
+    }
+}
+
+#define BLACKOUT_DURATION 5.0f
+void render_blackout_warning(GameState *game_state)
+{
+    if (game_state->GridState.blackout_timer <= 0) return;
+
+    int screen_w = GetScreenWidth();
+
+    float progress = game_state->GridState.blackout_timer / BLACKOUT_DURATION;
+    if (progress > 1.0f) progress = 1.0f;
+
+    int bar_w = screen_w * 0.3f;
+    int overlay_w = screen_w * 0.4f;
+    int bar_h = 20;
+    int bar_x = screen_w / 2 - bar_w / 2;
+    int bar_y = 10;
+    int overlay_x = screen_w / 2 - overlay_w / 2;
+
+    DrawRectangle(overlay_x, bar_y, screen_w * 0.4f, 50,(Color){0, 0, 0, 180});
+    DrawRectangle(bar_x, bar_y, bar_w+10, bar_h+10, BLACK);
+    DrawRectangle(bar_x+5, bar_y+5, bar_w * progress, bar_h, RED);
+    DrawText("GRID FAILURE IMMINENT", bar_x, bar_y + 30, 16, RED);
 }
 

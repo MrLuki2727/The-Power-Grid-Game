@@ -315,11 +315,32 @@ void simulation_update(GameState *game_state, float delta_time)
             game_state->GraphData.generation_history[i] = game_state->GraphData.generation_history[i + 1];
         }
     }
+#define BLACKOUT_THRESHOLD 80
+#define BLACKOUT_DURATION 5.0f
+
+
+
+    int stability_abs = abs(game_state->GridState.stability);
+
+    if (stability_abs >= BLACKOUT_THRESHOLD)
+    {
+        game_state->GridState.blackout_timer += delta_time;
+    }
+    else
+    {
+        game_state->GridState.blackout_timer -= delta_time * 2.0f; // schneller abbauen als aufbauen
+        if (game_state->GridState.blackout_timer < 0) game_state->GridState.blackout_timer = 0;
+    }
+
+    if (game_state->GridState.blackout_timer >= BLACKOUT_DURATION)
+    {
+        game_state->GridState.game_over = true;
+    }
 }
 
 void simulation_init(GameState *game_state)
 {
-    game_state->GridState.money = 100000;
+    game_state->GridState.money = 100;
     game_state->GridState.power_user_count = 10;
     game_state->GridState.stability = 0;
     game_state->GridState.satisfaction = 50;
@@ -329,6 +350,8 @@ void simulation_init(GameState *game_state)
     game_state->GridState.deviation_timer = 0.0f;
     game_state->is_playing = false;
     game_state->GraphData.history_index = 0;
+    game_state->GridState.game_over = false;
+    game_state->GridState.blackout_timer = 0.0f;
 
     game_state->Power_plants[0] = plant_defaults[1]; // Solar
     game_state->Power_plants[1] = plant_defaults[4]; // Pump

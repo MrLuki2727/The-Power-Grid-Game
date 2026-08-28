@@ -27,6 +27,8 @@ void render_load_game_popup(GameState* game_state);
 void render_settings(GameState* game_state);
 void render_title_screen(GameState* game_state, float time);
 void render_upgrade_popup(GameState* game_state);
+void render_game_over_screen(GameState* game_state);
+void render_blackout_warning(GameState *game_state);
 
 
 

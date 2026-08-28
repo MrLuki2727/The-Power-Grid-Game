@@ -38,6 +38,8 @@ typedef struct
     float user_growth_timer;
     float deviation_timer;
     float income_timer;
+    float blackout_timer;
+    bool game_over;
 
 
 }GridState_t;
